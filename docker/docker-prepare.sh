@@ -85,10 +85,19 @@ search_index() {
 	local -r index_version=9
 	local -r index_version_file=${DATA_DIR}/.index_version
 
-	if [[ (! -f "${index_version_file}") || $(<"${index_version_file}") != "$index_version" ]]; then
+	local do_reindex="0"
+	if [[ ! -f "${index_version_file}" ]]; then
+		do_reindex="1"
+		echo "${index_version_file} not found, will re-index"
+	elif [[ $(<"${index_version_file}") != "$index_version" ]]; then
+		do_reindex="1"
+		echo "Index version mismatch, will re-index"
+	fi
+
+	if [[ ${do_reindex} == "1" ]]; then
 		echo "Search index out of date. Updating..."
 		python3 manage.py document_index reindex --no-progress-bar
-		echo ${index_version} | tee "${index_version_file}" >/dev/null
+		echo ${index_version} | tee "${index_version_file}" > /dev/null
 	fi
 }
 
